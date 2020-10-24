@@ -18,4 +18,4 @@ $router->get('/', function () use ($router) {
 
 $router->get('/api/v1/flights/groups', 'FlightController@getFlightsGroups');
 $router->get('/api/v1/flights/all', 'FlightController@getAll');
-$router->get('/api/v1/flights[/{inboundOutbound:(?:inbound|outbound)}]', 'FlightController@getFlights');
+$router->get('/api/v1/flights[/{inboundOutbound:(?:(?:in|out)bound)}]', 'FlightController@getFlights');
