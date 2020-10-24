@@ -64,6 +64,7 @@ class FlightController extends Controller
                 }, $flights)
             );
 
+            // Busca vôos ida/volta
             $outboundFlights = $flights->where('outbound', 1);
             $inboundFlights = $flights->where('outbound', 0)->all();
             
@@ -75,10 +76,10 @@ class FlightController extends Controller
 
                     if ($outboundFlight->fare === $inboundFlight->fare) {
                         // Valor total das passagens do grupo
-                        $valorTotalPassagens = $outboundFlight->price + $inboundFlight->price;
+                        $totalValue = $outboundFlight->price + $inboundFlight->price;
                         
                         // Cria o ID do grupo
-                        $idGrupo = md5($valorTotalPassagens);
+                        $idGrupo = md5($totalValue);
                         
                         // Cria o grupo se não existir
                         if (!isset($groups[$idGrupo])) {
@@ -88,7 +89,7 @@ class FlightController extends Controller
                         // Seta os valores
                         $groups[$idGrupo]['uniqueId'] = $idGrupo;
                         $groups[$idGrupo]['fare'] = $outboundFlight->fare;
-                        $groups[$idGrupo]['totalPrice'] = $valorTotalPassagens;
+                        $groups[$idGrupo]['totalPrice'] = $totalValue;
                         $groups[$idGrupo]->setOutbound($outboundFlight);
                         $groups[$idGrupo]->setInbound($inboundFlight);
                     }
