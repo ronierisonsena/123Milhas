@@ -20,11 +20,6 @@ class FlightGroup extends Flight
         $this->inbound = collect();
     }
 
-    public function getCheapestPrice()
-    {
-        
-    }
-
     // Adiciona um voo de Ida
     public function setOutbound($flight)
     {
