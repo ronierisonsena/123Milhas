@@ -16,8 +16,7 @@ class FlightController extends Controller
      */
     public function getFlights($inboundOutbound = null) : array
     {
-        // dd($inboundOutbound);
-        $retorno = [
+        $data = [
             'status' => 200,
             'data' => []
         ];
@@ -32,13 +31,13 @@ class FlightController extends Controller
                 $flights = $flights->where('outbound', ($inboundOutbound == 'outbound' ? 1 : 0));
             }
 
-            $retorno['data'] = $flights;
+            $data['data'] = $flights;
         } catch (\Exception $e) {
-            $retorno['status'] = 422;
-            $retorno['message'] = $e->getMessage();
+            $data['status'] = 422;
+            $data['message'] = $e->getMessage();
         }
 
-        return $retorno;
+        return $data;
     }
 
 
