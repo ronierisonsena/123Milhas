@@ -59,30 +59,26 @@ class FlightController extends Controller
 
             // cria a collection de Flight's
             $flights = collect(
-                    array_map(function($flight) {
-                        return new Flight((array) $flight);
-                    }, $flights)
-                );
+                array_map(function($flight) {
+                    return new Flight((array) $flight);
+                }, $flights)
+            );
 
-            global $groups;
             $outboundFlights = $flights->where('outbound', 1);
-            $inboundFlights = $flights->where('outbound', 0);
-
-            // Cria as opções de valores possiveis para os grupos
-            $possibleValues = $this->getArrayPossibleValues($outboundFlights, $inboundFlights);
-
-            $inboundFlights = $inboundFlights->all();
-
+            $inboundFlights = $flights->where('outbound', 0)->all();
+            
+            // Cria os grupos
+            $groups = [];
+            
             foreach ($outboundFlights as $outboundFlight) {
-                array_walk($inboundFlights, function($inboundFlight) use ($outboundFlight, $possibleValues) {                    
-                    global $groups;
+                array_walk($inboundFlights, function($inboundFlight) use ($outboundFlight, &$groups) {                    
 
                     if ($outboundFlight->fare === $inboundFlight->fare) {
                         // Valor total das passagens do grupo
                         $valorTotalPassagens = $outboundFlight->price + $inboundFlight->price;
                         
-                        // Busca o ID do grupo
-                        $idGrupo = array_search($valorTotalPassagens, $possibleValues);
+                        // Cria o ID do grupo
+                        $idGrupo = md5($valorTotalPassagens);
                         
                         // Cria o grupo se não existir
                         if (!isset($groups[$idGrupo])) {
@@ -137,29 +133,5 @@ class FlightController extends Controller
                 'message' => $e->getMessage()
             ];
         }
-    }
-
-
-
-    /**
-     * Cria um array de valores únicos possíveis de passagens(ida + volta)
-     * 
-     * @param Collect $outboundFlights
-     * @param Collect $inboundFlights
-     * @return Array 
-     */
-    public function getArrayPossibleValues($outboundFlights, $inboundFlights) : array
-    {
-        $possibleValues = [];
-        $inboundFlights = $inboundFlights->all();
-
-        foreach ($outboundFlights as $outboundFlight) {
-            array_walk($inboundFlights, function($inboundFlight) use ($outboundFlight, &$possibleValues) {
-                $idGroup = md5($outboundFlight->id . $inboundFlight->id);
-                $possibleValues[$idGroup] = $outboundFlight->price + $inboundFlight->price;
-            });
-        }
-
-        return array_unique($possibleValues);
     }
 }
