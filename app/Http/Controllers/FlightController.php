@@ -14,13 +14,8 @@ class FlightController extends Controller
      * 
      * @return Array
      */
-    public function getFlights($inboundOutbound = null) : array
+    public function getFlights($inboundOutbound = null)
     {
-        $data = [
-            'status' => 200,
-            'data' => []
-        ];
-
         try {
             $flights = json_decode(
                 file_get_contents($this->url)
@@ -31,13 +26,12 @@ class FlightController extends Controller
                 $flights = $flights->where('outbound', ($inboundOutbound == 'outbound' ? 1 : 0));
             }
 
-            $data['data'] = $flights;
+            return json_encode($flights);
         } catch (\Exception $e) {
-            $data['status'] = 422;
-            $data['message'] = $e->getMessage();
+            return json_encode([
+                'message' => $e->getMessage()
+            ]);
         }
-
-        return $data;
     }
 
 
@@ -46,22 +40,15 @@ class FlightController extends Controller
      * 
      * @return Array
      */
-    public function getFlightsGroups() : array
+    public function getFlightsGroups()
     {
-        $data = [
-            'status' => 200,
-            'data' => []
-        ];
+        global $flights;
 
         try {
-            $flights = $this->getFlights()['data'];
-
             // cria a collection de Flight's
             $flights = collect(
-                array_map(function($flight) {
-                    return new Flight((array) $flight);
-                }, $flights)
-            );
+                    json_decode($this->getFlights())
+                );
 
             // Busca vôos ida/volta
             $outboundFlights = $flights->where('outbound', 1);
@@ -77,31 +64,32 @@ class FlightController extends Controller
                         // Valor total das passagens do grupo
                         $totalValue = $outboundFlight->price + $inboundFlight->price;
                         
-                        // Cria o ID do grupo
-                        $idGrupo = md5($totalValue);
+                        // TODO definir id do grupo, verificar grupo com valores iguais
+                        $groupId = md5($totalValue);
                         
                         // Cria o grupo se não existir
-                        if (!isset($groups[$idGrupo])) {
-                            $groups[$idGrupo] = new FlightGroup();
+                        if (!isset($groups[$groupId])) {
+                            $groups[$groupId] = new FlightGroup();
                         }
 
                         // Seta os valores
-                        $groups[$idGrupo]['uniqueId'] = $idGrupo;
-                        $groups[$idGrupo]['fare'] = $outboundFlight->fare;
-                        $groups[$idGrupo]['totalPrice'] = $totalValue;
-                        $groups[$idGrupo]->setOutbound($outboundFlight);
-                        $groups[$idGrupo]->setInbound($inboundFlight);
+                        $groups[$groupId]['uniqueId'] = $groupId;
+                        $groups[$groupId]['fare'] = $outboundFlight->fare;
+                        $groups[$groupId]['totalPrice'] = $totalValue;
+                        $groups[$groupId]->setOutbound($outboundFlight);
+                        $groups[$groupId]->setInbound($inboundFlight);
                     }
                 });
             };
 
-            $data['data'] = collect($groups)->sortBy('totalPrice');
+            return json_encode(
+                collect($groups)->sortBy('totalPrice')
+            );
         } catch (\Exception $e) {
-            $data['status'] = 422;
-            $data['message'] = $e->getMessage();
+            return json_encode([
+                'message' => $e->getMessage()
+            ]);
         }
-
-        return $data;
     }
 
     /**
@@ -109,13 +97,17 @@ class FlightController extends Controller
      * 
      * @return Array
      */
-    public function getAll() : array
+    public function getAll()
     {
+        global $flights;
+        
         try {
-            $flights = $this->getFlights()['data'];
             $flightsGroups = collect(
-                    $this->getFlightsGroups()['data']
+                    json_decode($this->getFlightsGroups())
                 );
+            $flights = collect(
+                json_decode($flights)
+            );
 
             $minPrice = $flightsGroups->min('totalPrice');
 
@@ -126,12 +118,11 @@ class FlightController extends Controller
             $data['cheapestPrice'] = $flightsGroups->min('totalPrice');
             $data['cheapestGroup'] = $flightsGroups->where('totalPrice', $minPrice)->first()->uniqueId;
 
-            return $data;
+            return json_encode($data);
         } catch(\Exception $e) {
-            return [
-                'status' => 422,
+            return json_encode([
                 'message' => $e->getMessage()
-            ];
+            ]);
         }
     }
 }

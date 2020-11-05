@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Models\Flight;
+use Illuminate\Database\Eloquent\Model;
 
-class FlightGroup extends Flight
+class FlightGroup extends Model
 {
     protected $fillable = [
         'uniqueId', 
